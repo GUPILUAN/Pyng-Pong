@@ -1,0 +1,14 @@
+# .venv
+.venv
+
+# __pycache__
+__pycache__
+
+# .vscode
+.vscode
+
+# .DS_Store
+.DS_Store
+
+# Archivo de pruebas
+pruebas.py
