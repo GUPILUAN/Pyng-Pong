@@ -4,7 +4,6 @@ Luis Angel Gutierrez Pineda
 
 Todos los derechos reservados.
 """
-
 import pygame
 import random
 
