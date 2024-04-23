@@ -15,6 +15,7 @@ class Pelota:
     __posInicial : pygame.Vector2
     __empezado : bool = False
     __rect : pygame.Rect
+    __direccion : pygame.Vector2 
 
     def __init__(self, radio: int, pos : pygame.Vector2, color : str) -> None:
         self.__radio = radio 
@@ -22,8 +23,6 @@ class Pelota:
         self.__posInicial = pos
         self.__velocidad = pygame.Vector2(300,300)
         self.setPos(pygame.Vector2(self.__posInicial.x -2, self.__posInicial.y-2))
-
-
 
     def setColor(self, nuevoColor : str) -> None:
         self.__color = pygame.Color(nuevoColor)
@@ -62,46 +61,61 @@ class Pelota:
     def modificarYPosInicial(self, random : int) -> None:
         self.__posInicial.y = random
 
-
-    direccion : pygame.Vector2 
-    def mover(self, displayRect: pygame.Rect, dt: float, player1Rect: pygame.Rect, player2Rect: pygame.Rect) -> None:
+    def mover(self, displayRect: pygame.Rect, dt: float, player1Rect: pygame.Rect, player2Rect: pygame.Rect, empezado : bool) -> None:
         
         if not self.__empezado:
-            self.direccion = self.getPosInicial() - self.getPos()
+            self.__direccion = self.getPosInicial() - self.__pos
    
-        self.direccion.normalize_ip()
-        self.__empezado = True
-        if self.getPos().y < displayRect.top or self.getPos().y > displayRect.bottom:
-            self.direccion.y *= -1
+        self.__direccion.normalize_ip()
+        self.__empezado = empezado
+
+        if (self.__pos.y - self.__radio) < displayRect.top :
+            self.setPos(pygame.Vector2(self.__pos.x, displayRect.top + self.__radio))
+            self.__direccion.y *= -1
+            self.setVelocidad(10)
+        elif(self.__pos.y + self.__radio) > displayRect.bottom:
+            self.setPos(pygame.Vector2(self.__pos.x, displayRect.bottom - self.__radio))
+            self.__direccion.y *= -1
             self.setVelocidad(10)
 
-        if self.getPos().x < displayRect.left or self.getPos().x > displayRect.right:
+        if self.__pos.x < displayRect.left or self.__pos.x > displayRect.right:
             numeroRandom = random.randint(displayRect.top, displayRect.bottom)
             self.modificarYPosInicial(numeroRandom)
             self.setPos(self.getPosInicial())
             self.resetVelocidad()
             self.__empezado = False
-
-        if self.__rect.colliderect(player1Rect) or self.__rect.colliderect(player2Rect):
-            self.direccion.x *= -1
+    
+        #Detecta colision con el jugador de la izquierda
+        if self.__rect.colliderect(player1Rect):
+            metido = player1Rect.right - self.__rect.left
+            self.setPos(pygame.Vector2(self.__pos.x + metido, self.__pos.y))
+            self.__direccion.x *= -1
+            self.setVelocidad(20)
+        #Detecta colision con el jugador de la derecha
+        elif self.__rect.colliderect(player2Rect):
+            metido =  self.__rect.right - player2Rect.left
+            self.setPos(pygame.Vector2(self.__pos.x - metido, self.__pos.y))
+            self.__direccion.x *= -1
             self.setVelocidad(20)
 
 
-        velocidad = self.direccion * self.getVelocidad().x * dt
-        self.setPos(self.getPos() + velocidad)
+        velocidad = self.__direccion * self.getVelocidad().x * dt
+        self.setPos(self.__pos + velocidad)
 
     
 class Jugador():
     __color : pygame.Color
-    __lado : int
+    __ancho : int
+    __alto : int
     __pos : pygame.Vector2
     __velocidad : float
     __local : bool
     __rect : pygame.Rect
 
     def __init__(self, lado: int, local : bool , color : str, displayRect : pygame.Rect ) -> None:
-        self.image = pygame.Surface((lado, lado * 3))
-        self.__lado = lado 
+        self.__ancho = lado 
+        self.__alto = lado * 9
+        self.image = pygame.Surface((self.__ancho,self.__alto))
         self.__color = pygame.Color(color)
         self.image.fill(self.getColor())
         self.__local = local
@@ -121,10 +135,10 @@ class Jugador():
         return self.__color
 
     def setLado(self, nuevoLado :int) -> None:
-        self.__lado = nuevoLado
+        self.__ancho = nuevoLado
 
     def getLado(self) -> int:
-        return self.__lado
+        return self.__ancho
     
     def setPos(self, vector : pygame.Vector2) -> None:
         self.__pos = vector
@@ -142,35 +156,20 @@ class Jugador():
         return self.__rect
     
 
-    def mover(self, displayRect : pygame.Rect, dt : float) -> None:
+    def mover(self, displayRect : pygame.Rect, dt : float, pelotaSize : int) -> None:
         tecla : pygame.key.ScancodeWrapper = pygame.key.get_pressed()
 
         if self.__local:
-            if tecla[pygame.K_w] and (self.getPos().y - (self.getLado() * 1.5)) > displayRect.top:
+            if tecla[pygame.K_w] and not tecla[pygame.K_s] and (self.__pos.y - self.__alto/2 - pelotaSize) > displayRect.top:
                 self.__pos.y -= self.__velocidad * dt
                 self.__rect = self.image.get_rect(center=(self.__pos.x, self.__pos.y))
-            elif (self.getPos().y - (self.getLado() * 1.5)) <= displayRect.top:
-                self.setPos(pygame.Vector2(self.getPos().x, displayRect.top + 0.1 + (self.getLado() * 1.5)))
-                self.__rect = self.image.get_rect(center=(self.__pos.x, self.__pos.y))
-
-            if tecla[pygame.K_s]and (self.getPos().y + (self.getLado() * 1.5)) < displayRect.bottom:
+            elif tecla[pygame.K_s] and not tecla[pygame.K_w] and (self.__pos.y + self.__alto/2 + pelotaSize) < displayRect.bottom:
                 self.__pos.y += self.__velocidad * dt
                 self.__rect = self.image.get_rect(center=(self.__pos.x, self.__pos.y))
-            elif (self.getPos().y + (self.getLado() * 1.5)) >= displayRect.bottom:
-                self.setPos(pygame.Vector2(self.getPos().x, displayRect.bottom - 0.1 - (self.getLado() * 1.5)))
-                self.__rect = self.image.get_rect(center=(self.__pos.x, self.__pos.y))
-
         else:
-            if tecla[pygame.K_UP] and (self.getPos().y - (self.getLado() * 1.5)) > displayRect.top:
+            if tecla[pygame.K_UP] and not tecla[pygame.K_DOWN]   and (self.__pos.y - self.__alto/2 - pelotaSize) > displayRect.top:
                 self.__pos.y -= self.__velocidad * dt
                 self.__rect = self.image.get_rect(center=(self.__pos.x, self.__pos.y))
-            elif (self.getPos().y - (self.getLado() * 1.5)) <= displayRect.top:
-                self.setPos(pygame.Vector2(self.getPos().x, displayRect.top + 0.1 + (self.getLado() * 1.5)))
-                self.__rect = self.image.get_rect(center=(self.__pos.x, self.__pos.y))
-
-            if tecla[pygame.K_DOWN] and (self.getPos().y + (self.getLado() * 1.5)) < displayRect.bottom:
+            elif tecla[pygame.K_DOWN] and not tecla[pygame.K_UP]  and (self.__pos.y + self.__alto/2 + pelotaSize) < displayRect.bottom:
                 self.__pos.y += self.__velocidad * dt
-                self.__rect = self.image.get_rect(center=(self.__pos.x, self.__pos.y))
-            elif (self.getPos().y + (self.getLado() * 1.5)) >= displayRect.bottom:
-                self.setPos(pygame.Vector2(self.getPos().x, displayRect.bottom - 0.1 - (self.getLado() * 1.5)))
                 self.__rect = self.image.get_rect(center=(self.__pos.x, self.__pos.y))
