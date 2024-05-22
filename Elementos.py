@@ -7,6 +7,62 @@ Todos los derechos reservados.
 import pygame
 import random
 
+class Marcador:
+    __puntosVisita : int = 0
+    __puntosLocal : int = 0
+    __font : pygame.font.Font 
+    __text : pygame.Surface
+    def __init__(self) -> None:
+        self.__font = pygame.font.Font(None, 72)
+        self.renderMarcador()
+
+    def updateMarcador(self, anotoLocal : bool) -> None:
+        if anotoLocal:
+            self.__puntosLocal += 1
+        else:
+            self.__puntosVisita += 1
+        self.renderMarcador()
+
+    def renderMarcador(self)-> None:
+        self.__text = self.__font.render(f"{self.__puntosLocal} - {self.__puntosVisita}", True, (255,255,255))
+
+    def getText(self) -> pygame.Surface:
+        return self.__text
+    
+    def getTextRect(self) -> pygame.Rect:
+        return self.__text.get_rect()
+    
+
+class Tiempo:
+    __tiempoLimite: float
+    __tiempoInicio: float
+    __font: pygame.font.Font
+    __text: pygame.Surface
+    __tiempoTranscurrido: float
+
+    def __init__(self, tiempoLimite: float = 180) -> None:
+
+        self.__font = pygame.font.Font(None, 36)
+        self.__tiempoLimite = tiempoLimite if tiempoLimite < 3600 and tiempoLimite > 0 else 180
+        self.__tiempoInicio = pygame.time.get_ticks()
+        self.__tiempoTranscurrido = 0.0
+        self.__text = self.__font.render(f"{self.__tiempoTranscurrido:.2f}", True, (255, 255, 255))
+
+    def actualizarTiempo(self) -> bool:
+        minutos : str = f"0{int((self.__tiempoLimite-self.__tiempoTranscurrido)/ 60)}"  if int(self.__tiempoLimite-self.__tiempoTranscurrido) / 60 < 10 else f"{int((self.__tiempoLimite-self.__tiempoTranscurrido) / 60)}"
+        segundos : str = f"0{int(self.__tiempoLimite-self.__tiempoTranscurrido) % 60}" if int(self.__tiempoLimite-self.__tiempoTranscurrido) % 60 < 10 else f"{int(self.__tiempoLimite-self.__tiempoTranscurrido) % 60}"
+        self.__tiempoTranscurrido = (pygame.time.get_ticks() - self.__tiempoInicio) / 1000
+        self.__text = self.__font.render(f"{minutos}:{segundos}", True, (255, 255, 255))
+        if self.__tiempoTranscurrido >= self.__tiempoLimite:
+            return False
+        return True
+
+    def getText(self) -> pygame.Surface:
+        return self.__text
+
+    def getTextRect(self) -> pygame.Rect:
+        return self.__text.get_rect()
+
 class Pelota:
     __color : pygame.Color
     __radio : int
@@ -61,7 +117,8 @@ class Pelota:
     def modificarYPosInicial(self, random : int) -> None:
         self.__posInicial.y = random
 
-    def mover(self, displayRect: pygame.Rect, dt: float, player1Rect: pygame.Rect, player2Rect: pygame.Rect, empezado : bool) -> None:
+    def mover(self, displayRect: pygame.Rect, dt: float, player1Rect: pygame.Rect, 
+              player2Rect: pygame.Rect, empezado : bool, marcador: Marcador) -> None:
         
         if not self.__empezado:
             self.__direccion = self.getPosInicial() - self.__pos
@@ -79,6 +136,7 @@ class Pelota:
             self.setVelocidad(10)
 
         if self.__pos.x < displayRect.left or self.__pos.x > displayRect.right:
+            marcador.updateMarcador(self.__pos.x > displayRect.right)
             numeroRandom = random.randint(displayRect.top, displayRect.bottom)
             self.modificarYPosInicial(numeroRandom)
             self.setPos(self.getPosInicial())
@@ -103,7 +161,7 @@ class Pelota:
         self.setPos(self.__pos + velocidad)
 
     
-class Jugador():
+class Jugador:
     __color : pygame.Color
     __ancho : int
     __alto : int
