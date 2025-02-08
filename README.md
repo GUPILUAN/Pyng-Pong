@@ -1,4 +1,5 @@
 # Pyng-Pong
+
 Homenaje a un pionero de los videojuegos "Pong", Realizado en Python
 
 > [!IMPORTANT]
@@ -7,3 +8,6 @@ Homenaje a un pionero de los videojuegos "Pong", Realizado en Python
 > [!TIP]
 > Recomiento utilizar un Entorno Virtual para ejecutar el proyecto
 
+# Capturas de pantalla
+
+![alt text](ss1.png)
