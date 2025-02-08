@@ -10,4 +10,4 @@ Homenaje a un pionero de los videojuegos "Pong", Realizado en Python
 
 # Capturas de pantalla
 
-![alt text](ss1.png)
+![alt text](/screenshots/ss1.png)
